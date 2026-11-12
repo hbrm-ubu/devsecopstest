@@ -1,0 +1,25 @@
+local.file_match "waf" {
+  path_targets = [
+    {"__path__" = "/var/log/waf/nginx/access.log", "job" = "nginx", "stream" = "access"},
+    {"__path__" = "/var/log/waf/nginx/error.log", "job" = "nginx", "stream" = "error"},
+    {"__path__" = "/var/log/waf/modsec/audit.log", "job" = "modsecurity", "stream" = "audit"},
+  ]
+}
+
+loki.source.file "waf" {
+  targets    = local.file_match.waf.targets
+  forward_to = [loki.process.labels.receiver]
+}
+
+loki.process "labels" {
+  stage.static_labels {
+    values = { host = "ubu1" }
+  }
+  forward_to = [loki.write.ubu2.receiver]
+}
+
+loki.write "ubu2" {
+  endpoint {
+    url = "http://10.8.0.1:3100/loki/api/v1/push"
+  }
+}

@@ -1,0 +1,38 @@
+- name: Nginx + ModSecurity (OWASP CRS) на ubu1
+  hosts: web
+  become: true
+  tasks:
+    - name: Docker та compose-плагін
+      ansible.builtin.apt:
+        name: [docker.io, docker-compose-v2]
+        state: present
+        update_cache: true
+
+    - name: Docker запущено та ввімкнено в автозапуск
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Каталоги проєкту
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: "{{ item.owner }}"
+        mode: "0755"
+      loop:
+        - { path: /opt/waf, owner: root }
+        - { path: /opt/waf/logs, owner: root }
+        - { path: /opt/waf/logs/nginx, owner: "101" }
+        - { path: /opt/waf/logs/modsec, owner: "101" }
+
+    - name: docker-compose.yml
+      ansible.builtin.copy:
+        src: docker-compose.yml
+        dest: /opt/waf/docker-compose.yml
+        mode: "0644"
+
+    - name: Запустити стек
+      community.docker.docker_compose_v2:
+        project_src: /opt/waf
+        state: present

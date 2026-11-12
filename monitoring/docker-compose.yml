@@ -1,0 +1,23 @@
+services:
+  loki:
+    image: grafana/loki:3.3.2
+    network_mode: host
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki.yml
+    volumes:
+      - ./loki.yml:/etc/loki/loki.yml:ro
+      - loki-data:/loki
+
+  grafana:
+    image: grafana/grafana:latest
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+    volumes:
+      - ./provisioning:/etc/grafana/provisioning/datasources:ro
+      - grafana-data:/var/lib/grafana
+
+volumes:
+  loki-data:
+  grafana-data:

@@ -1,0 +1,40 @@
+services:
+  backend:
+    image: traefik/whoami
+    command: ["--port", "8081"]
+    network_mode: host
+    restart: unless-stopped
+
+  waf:
+    image: owasp/modsecurity-crs:nginx
+    network_mode: host
+    restart: unless-stopped
+    depends_on: [backend]
+    environment:
+      PORT: "8080"
+      SERVER_NAME: ubu1
+      BACKEND: http://127.0.0.1:8081
+      MODSEC_RULE_ENGINE: "On"
+      MODSEC_AUDIT_ENGINE: "RelevantOnly"
+      MODSEC_AUDIT_LOG_FORMAT: "JSON"
+      MODSEC_AUDIT_LOG: /var/log/modsec/audit.log
+      ACCESSLOG: /var/log/nginx/access.log
+      ERRORLOG: /var/log/nginx/error.log
+      PARANOIA: "1"
+    volumes:
+      - ./logs/nginx:/var/log/nginx
+      - ./logs/modsec:/var/log/modsec
+
+  alloy:
+    image: grafana/alloy:latest
+    network_mode: host
+    restart: unless-stopped
+    command:
+      - run
+      - --server.http.listen-addr=127.0.0.1:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - ./alloy/data:/var/lib/alloy/data
+      - ./logs:/var/log/waf:ro

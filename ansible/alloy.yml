@@ -1,0 +1,29 @@
+- name: Alloy на ubu1, логи WAF до Loki на ubu2
+  hosts: web
+  become: true
+  tasks:
+    - name: Каталоги Alloy
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - /opt/waf/alloy
+        - /opt/waf/alloy/data
+
+    - name: Конфіг Alloy
+      ansible.builtin.copy:
+        src: config.alloy
+        dest: /opt/waf/alloy/config.alloy
+        mode: "0644"
+
+    - name: Оновити compose
+      ansible.builtin.copy:
+        src: docker-compose.yml
+        dest: /opt/waf/docker-compose.yml
+        mode: "0644"
+
+    - name: Запустити стек
+      community.docker.docker_compose_v2:
+        project_src: /opt/waf
+        state: present

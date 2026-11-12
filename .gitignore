@@ -1,0 +1,14 @@
+# секрети
+.env
+*.key
+*.pem
+wg.key
+wg0.conf
+id_*
+!id_*.pub
+ansible_ed25519*
+*.retry
+
+# службові файли
+.DS_Store
+*.swp
